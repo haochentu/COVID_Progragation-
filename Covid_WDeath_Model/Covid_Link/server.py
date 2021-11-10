@@ -59,7 +59,7 @@ chart = ChartModule(
     [
         {"Label": "Infected", "Color": "#FF0000"},
         {"Label": "Susceptible", "Color": "#008000"},
-        {"Label": "Resistant", "Color": "#808080"},
+        {"Label": "Immune to Covid", "Color": "#808080"},
         {"Label": "Dead", "Color": "#8B4500"},
         ]
 )
@@ -79,22 +79,24 @@ class MyTextElement(TextElement):
 model_params = {
     "num_nodes": UserSettableParameter(
         "slider",
-        "Number of agents",
+        "Population",
         1000,
         10,
         5000,
         100,
         description="Choose how many agents to include in the model",
     ),
+    
     "avg_node_degree": UserSettableParameter(
         "slider", 
-        "Avg Node Degree", 
+        "Avg Close Contacts", 
         5, 
         1, 
         12, 
         1, 
         description="Avg Node Degree"
     ),
+    
     "initial_outbreak_size": UserSettableParameter(
         "slider",
         "Initial Outbreak Size",
@@ -104,19 +106,20 @@ model_params = {
         1,
         description="Initial Outbreak Size",
     ),
+    
     "virus_spread_chance": UserSettableParameter(
         "slider",
-        "Virus Spread Chance",
-        0.6,
+        "Percentage of People Not Wearing Masks",
+        0.9,
         0.0,
         1.0,
         0.1,
-        description="Probability that susceptible neighbor will be infected",
+        description="If people are not wearing masks, the chance to spread covid is much higher.",
     ),
     "virus_check_frequency": UserSettableParameter(
         "slider",
-        "Virus Check Frequency",
-        0.3,
+        "Covid Test Frenquency",
+        0.1,
         0.0,
         1.0,
         0.1,
@@ -131,20 +134,40 @@ model_params = {
         0.1,
         description="Probability that the virus will be removed",
     ),
-    "gain_resistance_chance": UserSettableParameter(
+    "gain_resistance_chance_from_infection": UserSettableParameter(
         "slider",
-        "Gain Resistance Chance",
+        "Gain Immunity Chance From Infecting Covid19",
         0.2,
         0.0,
         1.0,
         0.1,
         description="Probability that a recovered agent will become "
-        "resistant to this virus in the future",
+        "resistant to Covid 19 delta from infections",
+    ),
+    
+    "double_vaccines_rate": UserSettableParameter(
+	"slider",
+	"Double Vaccines Rate",
+	0.5,
+	0.0,
+	1.0,
+	0.1,
+	description="the rate of population receive double vaccines",
+    ),
+    
+    "double_vaccines_efficiency": UserSettableParameter(
+	"slider",
+	"Double Vaccines Efficiency",
+	0.4,
+	0.0,
+	1.0,
+	0.1,
+	description="the rate of susceptible population gain immunity after receiving two doses of vaccines",
     ),
     "death_rate": UserSettableParameter(
         "slider",
         "Death Rate",
-        0.2,
+        0.1,
         0.0,
         1.0,
         0.1,
@@ -153,6 +176,6 @@ model_params = {
 }
 
 server = ModularServer(
-    VirusOnNetwork, [network, MyTextElement(), chart], "Virus Model", model_params
+    VirusOnNetwork, [network, MyTextElement(), chart], "COVID19 Delta Propagation", model_params
 )
 server.port = 8521
