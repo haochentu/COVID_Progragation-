@@ -13,8 +13,6 @@ class State(Enum):
     INFECTED = 1
     RESISTANT = 2
     DEAD = 3
-    #NEW
-
 
 def number_state(model, state):
     return sum([1 for a in model.grid.get_all_cell_contents() if a.state is state])
@@ -42,11 +40,13 @@ class VirusOnNetwork(Model):
         num_nodes=1000,
         avg_node_degree=5,
         initial_outbreak_size=1,
-        virus_spread_chance=0.6,
-        virus_check_frequency=0.3,
+        virus_spread_chance=0.9,
+        virus_check_frequency=0.1,
         recovery_chance=0.6,
-        gain_resistance_chance=0.2,
-        death_rate=0.2, 
+        gain_resistance_chance_from_infection=0.1,
+        double_vaccines_rate=0.5, 
+        double_vaccines_efficiency=0.4, 
+        death_rate=0.1, 
     ):
 
         self.num_nodes = num_nodes
@@ -60,14 +60,16 @@ class VirusOnNetwork(Model):
         self.virus_spread_chance = virus_spread_chance
         self.virus_check_frequency = virus_check_frequency
         self.recovery_chance = recovery_chance
-        self.gain_resistance_chance = gain_resistance_chance
+        self.gain_resistance_chance_from_infection = gain_resistance_chance_from_infection
+        self.double_vaccines_rate = double_vaccines_rate
+        self.double_vaccines_efficiency = double_vaccines_efficiency
         self.death_rate = death_rate
 
         self.datacollector = DataCollector(
             {
                 "Infected": number_infected,
                 "Susceptible": number_susceptible,
-                "Resistant": number_resistant,
+                "Immune to Covid": number_resistant,
                 "Dead": number_dead, 
             }
         )
@@ -81,7 +83,9 @@ class VirusOnNetwork(Model):
                 self.virus_spread_chance,
                 self.virus_check_frequency,
                 self.recovery_chance,
-                self.gain_resistance_chance,
+                self.gain_resistance_chance_from_infection,
+                self.double_vaccines_rate,
+                self.double_vaccines_efficiency,
                 self.death_rate
             )
             self.schedule.add(a)
@@ -123,7 +127,9 @@ class VirusAgent(Agent):
         virus_spread_chance,
         virus_check_frequency,
         recovery_chance,
-        gain_resistance_chance,
+        gain_resistance_chance_from_infection,
+        double_vaccines_rate,
+        double_vaccines_efficiency,
         death_rate, 
     ):
         super().__init__(unique_id, model)
@@ -133,7 +139,9 @@ class VirusAgent(Agent):
         self.virus_spread_chance = virus_spread_chance
         self.virus_check_frequency = virus_check_frequency
         self.recovery_chance = recovery_chance
-        self.gain_resistance_chance = gain_resistance_chance
+        self.gain_resistance_chance_from_infection = gain_resistance_chance_from_infection
+        self.double_vaccines_rate = double_vaccines_rate
+        self.double_vaccines_efficiency = double_vaccines_efficiency
         self.death_rate = death_rate
 
     def try_to_infect_neighbors(self):
@@ -147,8 +155,8 @@ class VirusAgent(Agent):
             if self.random.random() < self.virus_spread_chance:
                 a.state = State.INFECTED
 
-    def try_gain_resistance(self):
-        if self.random.random() < self.gain_resistance_chance:
+    def try_gain_resistance_chance_from_infection(self):
+        if self.random.random() < self.gain_resistance_chance_from_infection:
             self.state = State.RESISTANT
 
     def try_remove_infection(self):
@@ -156,7 +164,7 @@ class VirusAgent(Agent):
         if self.random.random() < self.recovery_chance:
             # Success
             self.state = State.SUSCEPTIBLE
-            self.try_gain_resistance()
+            self.try_gain_resistance_chance_from_infection()
         else:
             # Failed
             self.state = State.INFECTED
@@ -170,9 +178,22 @@ class VirusAgent(Agent):
     def be_dead(self):
         if self.random.random() < self.death_rate:
             self.state = State.DEAD
+    
+    def be_immuned_after_vaccination(self):
+    	if self.random.random() < self.double_vaccines_rate:
+    	    #did not receive double vaccines
+    	    self.state = State.SUSCEPTIBLE
+    	else:
+            #did receive double vaccines
+            if self.random.random() < self.double_vaccines_efficiency:
+            	self.state = State.RESISTANT
+            else:
+            	self.state = State.SUSCEPTIBLE
 
     def step(self):
         if self.state is State.INFECTED:
             self.try_to_infect_neighbors()
             self.be_dead()
+        if self.state is State.SUSCEPTIBLE:
+            self.be_immuned_after_vaccination()
         self.try_check_situation()
