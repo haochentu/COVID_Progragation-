@@ -158,7 +158,7 @@ model_params = {
     "double_vaccines_efficiency": UserSettableParameter(
 	"slider",
 	"Double Vaccines Efficiency",
-	0.4,
+	0.6,
 	0.0,
 	1.0,
 	0.1,
