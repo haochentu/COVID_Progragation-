@@ -18,6 +18,8 @@ class MoneyModel(Model):
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
             self.grid.place_agent(a,(x,y))
+        
+        self.running = True
 
     def step(self):
         '''Advance the model by one step'''
